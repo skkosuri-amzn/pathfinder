@@ -48,6 +48,7 @@ class GetAlertsResponseTests : ESTestCase() {
                 0L,
                 0,
                 "monitorId",
+                "monitor",
                 "monitorName",
                 0L,
                 randomUser(),
@@ -83,6 +84,7 @@ class GetAlertsResponseTests : ESTestCase() {
                 0L,
                 0,
                 "monitorId",
+                "monitor",
                 "monitorName",
                 0L,
                 User("admin", listOf(), listOf(), listOf()),
@@ -101,7 +103,7 @@ class GetAlertsResponseTests : ESTestCase() {
         val req = GetAlertsResponse(listOf(alert), 1)
         var actualXContentString = req.toXContent(builder(), ToXContent.EMPTY_PARAMS).string()
         val expectedXContentString = "{\"alerts\":[{\"id\":\"id\",\"version\":0,\"monitor_id\":\"monitorId\"," +
-                "\"schema_version\":0,\"monitor_version\":0,\"monitor_name\":\"monitorName\"," +
+                "\"schema_version\":0,\"monitor_version\":0,\"monitor_type\":\"monitor\",\"monitor_name\":\"monitorName\"," +
                 "\"monitor_user\":{\"name\":\"admin\",\"backend_roles\":[],\"roles\":[]," +
                 "\"custom_attribute_names\":[],\"user_requested_tenant\":null},\"trigger_id\":\"triggerId\"," +
                 "\"trigger_name\":\"triggerName\",\"state\":\"ACKNOWLEDGED\",\"error_message\":null,\"alert_history\":[]," +

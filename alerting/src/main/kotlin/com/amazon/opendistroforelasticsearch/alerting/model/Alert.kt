@@ -37,6 +37,7 @@ data class Alert(
     val version: Long = NO_VERSION,
     val schemaVersion: Int = NO_SCHEMA_VERSION,
     val monitorId: String,
+    val monitorType: String,
     val monitorName: String,
     val monitorVersion: Long,
     val monitorUser: User?,
@@ -69,7 +70,8 @@ data class Alert(
         errorHistory: List<AlertError> = mutableListOf(),
         actionExecutionResults: List<ActionExecutionResult> = mutableListOf(),
         schemaVersion: Int = NO_SCHEMA_VERSION
-    ) : this(monitorId = monitor.id, monitorName = monitor.name, monitorVersion = monitor.version, monitorUser = monitor.user,
+    ) : this(monitorId = monitor.id, monitorType = monitor.type,
+            monitorName = monitor.name, monitorVersion = monitor.version, monitorUser = monitor.user,
             triggerId = trigger.id, triggerName = trigger.name, state = state, startTime = startTime,
             lastNotificationTime = lastNotificationTime, errorMessage = errorMessage, errorHistory = errorHistory,
             severity = trigger.severity, actionExecutionResults = actionExecutionResults, schemaVersion = schemaVersion)
@@ -84,6 +86,7 @@ data class Alert(
             version = sin.readLong(),
             schemaVersion = sin.readInt(),
             monitorId = sin.readString(),
+            monitorType = sin.readString(),
             monitorName = sin.readString(),
             monitorVersion = sin.readLong(),
             monitorUser = if (sin.readBoolean()) {
@@ -110,6 +113,7 @@ data class Alert(
         out.writeLong(version)
         out.writeInt(schemaVersion)
         out.writeString(monitorId)
+        out.writeString(monitorType)
         out.writeString(monitorName)
         out.writeLong(monitorVersion)
         out.writeBoolean(monitorUser != null)
@@ -134,6 +138,7 @@ data class Alert(
         const val ALERT_VERSION_FIELD = "version"
         const val MONITOR_ID_FIELD = "monitor_id"
         const val MONITOR_VERSION_FIELD = "monitor_version"
+        const val MONITOR_TYPE_FIELD = "monitor_type"
         const val MONITOR_NAME_FIELD = "monitor_name"
         const val MONITOR_USER_FIELD = "monitor_user"
         const val TRIGGER_ID_FIELD = "trigger_id"
@@ -159,6 +164,7 @@ data class Alert(
             var schemaVersion = NO_SCHEMA_VERSION
             lateinit var monitorName: String
             var monitorVersion: Long = Versions.NOT_FOUND
+            lateinit var monitorType: String
             var monitorUser: User? = null
             lateinit var triggerId: String
             lateinit var triggerName: String
@@ -182,6 +188,7 @@ data class Alert(
                     SCHEMA_VERSION_FIELD -> schemaVersion = xcp.intValue()
                     MONITOR_NAME_FIELD -> monitorName = xcp.text()
                     MONITOR_VERSION_FIELD -> monitorVersion = xcp.longValue()
+                    MONITOR_TYPE_FIELD -> monitorType = xcp.text()
                     MONITOR_USER_FIELD -> monitorUser = if (xcp.currentToken() == XContentParser.Token.VALUE_NULL) null else User.parse(xcp)
                     TRIGGER_ID_FIELD -> triggerId = xcp.text()
                     STATE_FIELD -> state = State.valueOf(xcp.text())
@@ -208,7 +215,8 @@ data class Alert(
             }
 
             return Alert(id = id, version = version, schemaVersion = schemaVersion, monitorId = requireNotNull(monitorId),
-                    monitorName = requireNotNull(monitorName), monitorVersion = monitorVersion, monitorUser = monitorUser,
+                    monitorName = requireNotNull(monitorName), monitorVersion = monitorVersion,
+                    monitorType = monitorType, monitorUser = monitorUser,
                     triggerId = requireNotNull(triggerId), triggerName = requireNotNull(triggerName),
                     state = requireNotNull(state), startTime = requireNotNull(startTime), endTime = endTime,
                     lastNotificationTime = lastNotificationTime, acknowledgedTime = acknowledgedTime,
@@ -230,6 +238,7 @@ data class Alert(
                 .field(MONITOR_ID_FIELD, monitorId)
                 .field(SCHEMA_VERSION_FIELD, schemaVersion)
                 .field(MONITOR_VERSION_FIELD, monitorVersion)
+                .field(MONITOR_TYPE_FIELD, monitorType)
                 .field(MONITOR_NAME_FIELD, monitorName)
                 .optionalUserField(MONITOR_USER_FIELD, monitorUser)
                 .field(TRIGGER_ID_FIELD, triggerId)

@@ -62,6 +62,7 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 
 fun randomMonitor(
+    type: String = "monitor",
     name: String = ESRestTestCase.randomAlphaOfLength(10),
     user: User = randomUser(),
     inputs: List<Input> = listOf(SearchInput(emptyList(), SearchSourceBuilder().query(QueryBuilders.matchAllQuery()))),
@@ -72,13 +73,14 @@ fun randomMonitor(
     lastUpdateTime: Instant = Instant.now().truncatedTo(ChronoUnit.MILLIS),
     withMetadata: Boolean = false
 ): Monitor {
-    return Monitor(name = name, enabled = enabled, inputs = inputs, schedule = schedule, triggers = triggers,
+    return Monitor(name = name, type = type, enabled = enabled, inputs = inputs, schedule = schedule, triggers = triggers,
             enabledTime = enabledTime, lastUpdateTime = lastUpdateTime,
             user = user, uiMetadata = if (withMetadata) mapOf("foo" to "bar") else mapOf())
 }
 
 // Monitor of older versions without security.
 fun randomMonitorWithoutUser(
+    type: String = "monitor",
     name: String = ESRestTestCase.randomAlphaOfLength(10),
     inputs: List<Input> = listOf(SearchInput(emptyList(), SearchSourceBuilder().query(QueryBuilders.matchAllQuery()))),
     schedule: Schedule = IntervalSchedule(interval = 5, unit = ChronoUnit.MINUTES),
@@ -88,7 +90,7 @@ fun randomMonitorWithoutUser(
     lastUpdateTime: Instant = Instant.now().truncatedTo(ChronoUnit.MILLIS),
     withMetadata: Boolean = false
 ): Monitor {
-    return Monitor(name = name, enabled = enabled, inputs = inputs, schedule = schedule, triggers = triggers,
+    return Monitor(name = name, type = type, enabled = enabled, inputs = inputs, schedule = schedule, triggers = triggers,
             enabledTime = enabledTime, lastUpdateTime = lastUpdateTime,
             user = null, uiMetadata = if (withMetadata) mapOf("foo" to "bar") else mapOf())
 }

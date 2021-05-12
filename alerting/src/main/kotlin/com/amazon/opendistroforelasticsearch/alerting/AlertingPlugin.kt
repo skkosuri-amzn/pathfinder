@@ -133,7 +133,7 @@ internal class AlertingPlugin : PainlessExtension, ActionPlugin, ScriptPlugin, R
         @JvmField val DESTINATION_BASE_URI = "/_opendistro/_alerting/destinations"
         @JvmField val EMAIL_ACCOUNT_BASE_URI = "$DESTINATION_BASE_URI/email_accounts"
         @JvmField val EMAIL_GROUP_BASE_URI = "$DESTINATION_BASE_URI/email_groups"
-        @JvmField val ALERTING_JOB_TYPES = listOf("monitor")
+        @JvmField val ALERTING_JOB_TYPES = listOf("monitor", "detector")
     }
 
     lateinit var runner: MonitorRunner

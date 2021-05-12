@@ -119,6 +119,7 @@ class XContentTests : ESTestCase() {
 
     fun `test alert parsing without user`() {
         val alertStr = "{\"id\":\"\",\"version\":-1,\"monitor_id\":\"\",\"schema_version\":0,\"monitor_version\":1," +
+                "\"monitor_type\":\"MONITOR\"," +
                 "\"monitor_name\":\"ARahqfRaJG\",\"trigger_id\":\"fhe1-XQBySl0wQKDBkOG\",\"trigger_name\":\"ffELMuhlro\"," +
                 "\"state\":\"ACTIVE\",\"error_message\":null,\"alert_history\":[],\"severity\":\"1\",\"action_execution_results\"" +
                 ":[{\"action_id\":\"ghe1-XQBySl0wQKDBkOG\",\"last_execution_time\":1601917224583,\"throttled_count\":-1478015168}," +
@@ -129,7 +130,8 @@ class XContentTests : ESTestCase() {
     }
 
     fun `test alert parsing with user as null`() {
-        val alertStr = "{\"id\":\"\",\"version\":-1,\"monitor_id\":\"\",\"schema_version\":0,\"monitor_version\":1,\"monitor_user\":null," +
+        val alertStr = "{\"id\":\"\",\"version\":-1,\"monitor_id\":\"\",\"monitor_type\":\"monitor\",\"schema_version\":0," +
+                "\"monitor_version\":1,\"monitor_user\":null," +
             "\"monitor_name\":\"ARahqfRaJG\",\"trigger_id\":\"fhe1-XQBySl0wQKDBkOG\",\"trigger_name\":\"ffELMuhlro\"," +
             "\"state\":\"ACTIVE\",\"error_message\":null,\"alert_history\":[],\"severity\":\"1\",\"action_execution_results\"" +
             ":[{\"action_id\":\"ghe1-XQBySl0wQKDBkOG\",\"last_execution_time\":1601917224583,\"throttled_count\":-1478015168}," +

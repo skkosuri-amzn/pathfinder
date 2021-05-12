@@ -49,6 +49,7 @@ import java.time.Instant
 data class Monitor(
     override val id: String = NO_ID,
     override val version: Long = NO_VERSION,
+    override val type: String,
     override val name: String,
     override val enabled: Boolean,
     override val schedule: Schedule,
@@ -60,8 +61,6 @@ data class Monitor(
     val triggers: List<Trigger>,
     val uiMetadata: Map<String, Any>
 ) : ScheduledJob {
-
-    override val type = MONITOR_TYPE
 
     init {
         // Ensure that trigger ids are unique within a monitor
@@ -82,6 +81,7 @@ data class Monitor(
     constructor(sin: StreamInput): this(
         id = sin.readString(),
         version = sin.readLong(),
+        type = sin.readString(),
         name = sin.readString(),
         enabled = sin.readBoolean(),
         schedule = Schedule.readFrom(sin),
@@ -106,7 +106,7 @@ data class Monitor(
 
     override fun toXContent(builder: XContentBuilder, params: ToXContent.Params): XContentBuilder {
         builder.startObject()
-        if (params.paramAsBoolean("with_type", false)) builder.startObject(type)
+        if (params.paramAsBoolean("with_type", false)) builder.startObject("monitor")
         builder.field(TYPE_FIELD, type)
                 .field(SCHEMA_VERSION_FIELD, schemaVersion)
                 .field(NAME_FIELD, name)
@@ -128,6 +128,7 @@ data class Monitor(
     override fun writeTo(out: StreamOutput) {
         out.writeString(id)
         out.writeLong(version)
+        out.writeString(type)
         out.writeString(name)
         out.writeBoolean(enabled)
         if (schedule is CronSchedule) {
@@ -147,7 +148,6 @@ data class Monitor(
     }
 
     companion object {
-        const val MONITOR_TYPE = "monitor"
         const val TYPE_FIELD = "type"
         const val SCHEMA_VERSION_FIELD = "schema_version"
         const val NAME_FIELD = "name"
@@ -165,7 +165,7 @@ data class Monitor(
         // This is defined here instead of in ScheduledJob to avoid having the ScheduledJob class know about all
         // the different subclasses and creating circular dependencies
         val XCONTENT_REGISTRY = NamedXContentRegistry.Entry(ScheduledJob::class.java,
-                ParseField(MONITOR_TYPE),
+                ParseField("monitor"),
                 CheckedFunction { parse(it) })
 
         @JvmStatic
@@ -182,6 +182,7 @@ data class Monitor(
             var schemaVersion = NO_SCHEMA_VERSION
             val triggers: MutableList<Trigger> = mutableListOf()
             val inputs: MutableList<Input> = mutableListOf()
+            var type = MonitorType.MONITOR.type
 
             ensureExpectedToken(Token.START_OBJECT, xcp.currentToken(), xcp)
             while (xcp.nextToken() != Token.END_OBJECT) {
@@ -190,6 +191,7 @@ data class Monitor(
 
                 when (fieldName) {
                     SCHEMA_VERSION_FIELD -> schemaVersion = xcp.intValue()
+                    TYPE_FIELD -> type = xcp.text()
                     NAME_FIELD -> name = xcp.text()
                     USER_FIELD -> user = if (xcp.currentToken() == Token.VALUE_NULL) null else User.parse(xcp)
                     ENABLED_FIELD -> enabled = xcp.booleanValue()
@@ -222,6 +224,7 @@ data class Monitor(
             }
             return Monitor(id,
                     version,
+                    type,
                     requireNotNull(name) { "Monitor name is null" },
                     enabled,
                     requireNotNull(schedule) { "Monitor schedule is null" },

@@ -47,7 +47,7 @@ class GetMonitorResponseTests : ESTestCase() {
 
         val cronSchedule = CronSchedule(cronExpression, ZoneId.of("Asia/Kolkata"), testInstance)
         val req = GetMonitorResponse("1234", 1L, 2L, 0L, RestStatus.OK,
-                Monitor("123", 0L, "test-monitor", true, cronSchedule, Instant.now(),
+                Monitor("123", 0L, "monitor", "test-monitor", true, cronSchedule, Instant.now(),
                         Instant.now(), randomUser(), 0, mutableListOf(), mutableListOf(), mutableMapOf()))
         assertNotNull(req)
 

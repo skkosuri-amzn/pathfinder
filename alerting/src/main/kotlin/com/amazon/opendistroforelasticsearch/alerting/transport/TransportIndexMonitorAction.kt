@@ -24,6 +24,7 @@ import com.amazon.opendistroforelasticsearch.alerting.core.model.ScheduledJob.Co
 import com.amazon.opendistroforelasticsearch.alerting.core.model.ScheduledJob.Companion.SCHEDULED_JOB_TYPE
 import com.amazon.opendistroforelasticsearch.alerting.core.model.SearchInput
 import com.amazon.opendistroforelasticsearch.alerting.model.Monitor
+import com.amazon.opendistroforelasticsearch.alerting.model.MonitorType
 import com.amazon.opendistroforelasticsearch.alerting.settings.AlertingSettings
 import com.amazon.opendistroforelasticsearch.alerting.settings.AlertingSettings.Companion.ALERTING_MAX_MONITORS
 import com.amazon.opendistroforelasticsearch.alerting.settings.AlertingSettings.Companion.FILTER_BY_BACKEND_ROLES
@@ -279,7 +280,8 @@ class TransportIndexMonitorAction @Inject constructor(
 
             if (request.method == RestRequest.Method.PUT) return updateMonitor()
 
-            val query = QueryBuilders.boolQuery().filter(QueryBuilders.termQuery("${Monitor.MONITOR_TYPE}.type", Monitor.MONITOR_TYPE))
+            val query = QueryBuilders.boolQuery().filter(QueryBuilders.termQuery(
+                    "${MonitorType.MONITOR.type}.type", MonitorType.MONITOR.type))
             val searchSource = SearchSourceBuilder().query(query).timeout(requestTimeout)
             val searchRequest = SearchRequest(SCHEDULED_JOBS_INDEX).source(searchSource)
             client.search(searchRequest, object : ActionListener<SearchResponse> {
