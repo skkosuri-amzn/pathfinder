@@ -30,7 +30,7 @@ class AcknowledgeAlertResponseTests : ESTestCase() {
     fun `test acknowledge alert response`() {
 
         val acknowledged = mutableListOf(
-`            Alert("1234", 0L, 1, "monitor-1234", "monitor", "test-monitor", 0L, randomUser(),
+            Alert("1234", 0L, 1, "monitor-1234", "monitor", "test-monitor", 0L, randomUser(),
                     "trigger-14", "test-trigger", Alert.State.ACKNOWLEDGED,
                     Instant.now(), Instant.now(), Instant.now(), Instant.now(), null, ArrayList(),
                     "sev-2", ArrayList()

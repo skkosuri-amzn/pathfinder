@@ -25,6 +25,15 @@
     "severity": {
       "type": "keyword"
     },
+    "monitor_type": {
+      "type": "text",
+      "fields": {
+        "keyword": {
+          "type": "keyword",
+          "ignore_above": 256
+        }
+      }
+    },
     "monitor_name": {
       "type": "text",
       "fields": {
