@@ -21,6 +21,7 @@ import com.amazon.opendistroforelasticsearch.alerting.action.GetAlertsResponse
 import com.amazon.opendistroforelasticsearch.alerting.alerts.AlertIndices
 import com.amazon.opendistroforelasticsearch.alerting.elasticapi.addFilter
 import com.amazon.opendistroforelasticsearch.alerting.model.Alert
+import com.amazon.opendistroforelasticsearch.alerting.model.MonitorType
 import com.amazon.opendistroforelasticsearch.alerting.settings.AlertingSettings
 import com.amazon.opendistroforelasticsearch.alerting.util.AlertingException
 import com.amazon.opendistroforelasticsearch.commons.ConfigConstants
@@ -98,6 +99,12 @@ class TransportGetAlertsAction @Inject constructor(
 
             if (getAlertsRequest.monitorId != null) {
                 queryBuilder.filter(QueryBuilders.termQuery("monitor_id", getAlertsRequest.monitorId))
+            }
+
+            if (getAlertsRequest.monitorType == null) {
+                queryBuilder.filter(QueryBuilders.termQuery("monitor_type", MonitorType.MONITOR.type))
+            } else {
+                queryBuilder.filter(QueryBuilders.termQuery("monitor_type", getAlertsRequest.monitorType))
             }
 
             if (!tableProp.searchString.isNullOrBlank()) {

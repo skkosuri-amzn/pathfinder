@@ -57,6 +57,7 @@ class RestGetAlertsAction : BaseRestHandler() {
         val severityLevel = request.param("severityLevel", "ALL")
         val alertState = request.param("alertState", "ALL")
         val monitorId: String? = request.param("monitorId")
+        val monitorType: String? = request.param("monitorType")
         val table = Table(
                 sortOrder,
                 sortString,
@@ -66,7 +67,7 @@ class RestGetAlertsAction : BaseRestHandler() {
                 searchString
         )
 
-        val getAlertsRequest = GetAlertsRequest(table, severityLevel, alertState, monitorId)
+        val getAlertsRequest = GetAlertsRequest(table, severityLevel, alertState, monitorId, monitorType)
         return RestChannelConsumer {
             channel -> client.execute(GetAlertsAction.INSTANCE, getAlertsRequest, RestToXContentListener(channel))
         }
