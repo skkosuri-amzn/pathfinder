@@ -22,6 +22,12 @@
     "version": {
       "type": "long"
     },
+    "description": {
+      "type": "text"
+    },
+    "analyze": {
+      "type": "text"
+    },
     "severity": {
       "type": "keyword"
     },
@@ -80,6 +86,9 @@
         }
       }
     },
+    "monitor_tags": {
+      "type" : "text"
+    },
     "trigger_id": {
       "type": "keyword"
     },
@@ -106,6 +115,23 @@
     },
     "end_time": {
       "type": "date"
+    },
+    "acknowledge_duration": {
+      "type": "long"
+    },
+    "total_duration": {
+      "type": "long"
+    },
+    "related_resources": {
+      "type": "nested",
+      "properties": {
+        "resource_type": {
+          "type": "text"
+        },
+        "resource": {
+          "type": "text"
+        }
+      }
     },
     "error_message": {
       "type": "text"

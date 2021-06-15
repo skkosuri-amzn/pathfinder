@@ -85,13 +85,16 @@ class TransportAcknowledgeAlertAction @Inject constructor(
                 val alert = Alert.parse(xcp, hit.id, hit.version)
                 alerts[alert.id] = alert
                 if (alert.state == Alert.State.ACTIVE) {
+                    val now = Instant.now()
+                    val ackDuration = now.toEpochMilli() - alert.startTime.toEpochMilli()
                     listOf(UpdateRequest(AlertIndices.ALERT_INDEX, hit.id)
                             .routing(request.monitorId)
                             .setIfSeqNo(hit.seqNo)
                             .setIfPrimaryTerm(hit.primaryTerm)
                             .doc(XContentFactory.jsonBuilder().startObject()
                                     .field(Alert.STATE_FIELD, Alert.State.ACKNOWLEDGED.toString())
-                                    .optionalTimeField(Alert.ACKNOWLEDGED_TIME_FIELD, Instant.now())
+                                    .optionalTimeField(Alert.ACKNOWLEDGED_TIME_FIELD, now)
+                                    .field(Alert.ACKNOWLEDGE_DURATION, ackDuration)
                                     .endObject()))
                 } else {
                     emptyList()

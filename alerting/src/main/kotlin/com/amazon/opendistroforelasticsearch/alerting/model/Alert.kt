@@ -16,7 +16,9 @@
 package com.amazon.opendistroforelasticsearch.alerting.model
 
 import com.amazon.opendistroforelasticsearch.alerting.alerts.AlertError
+import com.amazon.opendistroforelasticsearch.alerting.alerts.RelatedResource
 import com.amazon.opendistroforelasticsearch.alerting.elasticapi.instant
+import com.amazon.opendistroforelasticsearch.alerting.elasticapi.optionalDurationField
 import com.amazon.opendistroforelasticsearch.alerting.elasticapi.optionalTimeField
 import com.amazon.opendistroforelasticsearch.alerting.elasticapi.optionalUserField
 import com.amazon.opendistroforelasticsearch.alerting.util.IndexUtils.Companion.NO_SCHEMA_VERSION
@@ -30,12 +32,15 @@ import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.common.xcontent.XContentParser
 import org.elasticsearch.common.xcontent.XContentParserUtils.ensureExpectedToken
 import java.io.IOException
+import java.time.Duration
 import java.time.Instant
 
 data class Alert(
     val id: String = NO_ID,
     val version: Long = NO_VERSION,
     val schemaVersion: Int = NO_SCHEMA_VERSION,
+    val description: String?,
+    val analyze: String?, // todo: sriram replace this with context { ...}
     val monitorId: String,
     val monitorType: String,
     val monitorName: String,
@@ -48,6 +53,9 @@ data class Alert(
     val endTime: Instant? = null,
     val lastNotificationTime: Instant? = null,
     val acknowledgedTime: Instant? = null,
+    val acknowledgeDuration: Duration? = null,
+    val totalDuration: Duration? = null,
+    val relatedResources: List<RelatedResource>,
     val errorMessage: String? = null,
     val errorHistory: List<AlertError>,
     val severity: String,
@@ -61,19 +69,24 @@ data class Alert(
     }
 
     constructor(
+        description: String?,
+        analyze: String?,
         monitor: Monitor,
         trigger: Trigger,
         startTime: Instant,
         lastNotificationTime: Instant?,
         state: State = State.ACTIVE,
+        relatedResources: List<RelatedResource> = mutableListOf(),
         errorMessage: String? = null,
         errorHistory: List<AlertError> = mutableListOf(),
         actionExecutionResults: List<ActionExecutionResult> = mutableListOf(),
         schemaVersion: Int = NO_SCHEMA_VERSION
     ) : this(monitorId = monitor.id, monitorType = monitor.type,
             monitorName = monitor.name, monitorVersion = monitor.version, monitorUser = monitor.user,
+            description = description, analyze = analyze,
             triggerId = trigger.id, triggerName = trigger.name, state = state, startTime = startTime,
-            lastNotificationTime = lastNotificationTime, errorMessage = errorMessage, errorHistory = errorHistory,
+            lastNotificationTime = lastNotificationTime,
+            relatedResources = relatedResources, errorMessage = errorMessage, errorHistory = errorHistory,
             severity = trigger.severity, actionExecutionResults = actionExecutionResults, schemaVersion = schemaVersion)
 
     enum class State {
@@ -82,27 +95,32 @@ data class Alert(
 
     @Throws(IOException::class)
     constructor(sin: StreamInput): this(
-            id = sin.readString(),
-            version = sin.readLong(),
-            schemaVersion = sin.readInt(),
-            monitorId = sin.readString(),
-            monitorType = sin.readString(),
-            monitorName = sin.readString(),
-            monitorVersion = sin.readLong(),
-            monitorUser = if (sin.readBoolean()) {
-                User(sin)
-            } else null,
-            triggerId = sin.readString(),
-            triggerName = sin.readString(),
-            state = sin.readEnum(State::class.java),
-            startTime = sin.readInstant(),
-            endTime = sin.readOptionalInstant(),
-            lastNotificationTime = sin.readOptionalInstant(),
-            acknowledgedTime = sin.readOptionalInstant(),
-            errorMessage = sin.readOptionalString(),
-            errorHistory = sin.readList(::AlertError),
-            severity = sin.readString(),
-            actionExecutionResults = sin.readList(::ActionExecutionResult)
+        id = sin.readString(),
+        version = sin.readLong(),
+        schemaVersion = sin.readInt(),
+        description = sin.readOptionalString(),
+        analyze = sin.readOptionalString(),
+        monitorId = sin.readString(),
+        monitorType = sin.readString(),
+        monitorName = sin.readString(),
+        monitorVersion = sin.readLong(),
+        monitorUser = if (sin.readBoolean()) {
+            User(sin)
+        } else null,
+        triggerId = sin.readString(),
+        triggerName = sin.readString(),
+        state = sin.readEnum(State::class.java),
+        startTime = sin.readInstant(),
+        endTime = sin.readOptionalInstant(),
+        lastNotificationTime = sin.readOptionalInstant(),
+        acknowledgedTime = sin.readOptionalInstant(),
+        acknowledgeDuration = Duration.ofMillis(sin.readOptionalLong()),
+        totalDuration = Duration.ofMillis(sin.readOptionalLong()),
+        relatedResources = sin.readList(::RelatedResource),
+        errorMessage = sin.readOptionalString(),
+        errorHistory = sin.readList(::AlertError),
+        severity = sin.readString(),
+        actionExecutionResults = sin.readList(::ActionExecutionResult)
     )
 
     fun isAcknowledged(): Boolean = (state == State.ACKNOWLEDGED)
@@ -112,6 +130,8 @@ data class Alert(
         out.writeString(id)
         out.writeLong(version)
         out.writeInt(schemaVersion)
+        out.writeOptionalString(description)
+        out.writeOptionalString(analyze)
         out.writeString(monitorId)
         out.writeString(monitorType)
         out.writeString(monitorName)
@@ -125,6 +145,9 @@ data class Alert(
         out.writeOptionalInstant(endTime)
         out.writeOptionalInstant(lastNotificationTime)
         out.writeOptionalInstant(acknowledgedTime)
+        out.writeOptionalLong(acknowledgeDuration?.toMillis())
+        out.writeOptionalLong(totalDuration?.toMillis())
+        out.writeCollection(relatedResources)
         out.writeOptionalString(errorMessage)
         out.writeCollection(errorHistory)
         out.writeString(severity)
@@ -135,6 +158,8 @@ data class Alert(
 
         const val ALERT_ID_FIELD = "id"
         const val SCHEMA_VERSION_FIELD = "schema_version"
+        const val DESCRIPTION_FIELD = "description"
+        const val ANALYZE_FIELD = "analyze"
         const val ALERT_VERSION_FIELD = "version"
         const val MONITOR_ID_FIELD = "monitor_id"
         const val MONITOR_VERSION_FIELD = "monitor_version"
@@ -148,6 +173,9 @@ data class Alert(
         const val LAST_NOTIFICATION_TIME_FIELD = "last_notification_time"
         const val END_TIME_FIELD = "end_time"
         const val ACKNOWLEDGED_TIME_FIELD = "acknowledged_time"
+        const val ACKNOWLEDGE_DURATION = "acknowledge_duration"
+        const val TOTAL_DURATION = "total_duration"
+        const val RELATED_RESOURCES_FIELD = "related_resource"
         const val ERROR_MESSAGE_FIELD = "error_message"
         const val ALERT_HISTORY_FIELD = "alert_history"
         const val SEVERITY_FIELD = "severity"
@@ -162,6 +190,8 @@ data class Alert(
 
             lateinit var monitorId: String
             var schemaVersion = NO_SCHEMA_VERSION
+            var description: String? = ""
+            var analyze: String? = ""
             lateinit var monitorName: String
             var monitorVersion: Long = Versions.NOT_FOUND
             lateinit var monitorType: String
@@ -174,8 +204,11 @@ data class Alert(
             var endTime: Instant? = null
             var lastNotificationTime: Instant? = null
             var acknowledgedTime: Instant? = null
+            var acknowledgeDuration: Duration? = null
+            var totalDuration: Duration? = null
             var errorMessage: String? = null
             val errorHistory: MutableList<AlertError> = mutableListOf()
+            val relatedResources: MutableList<RelatedResource> = mutableListOf()
             var actionExecutionResults: MutableList<ActionExecutionResult> = mutableListOf()
 
             ensureExpectedToken(XContentParser.Token.START_OBJECT, xcp.currentToken(), xcp)
@@ -186,6 +219,8 @@ data class Alert(
                 when (fieldName) {
                     MONITOR_ID_FIELD -> monitorId = xcp.text()
                     SCHEMA_VERSION_FIELD -> schemaVersion = xcp.intValue()
+                    DESCRIPTION_FIELD -> description = xcp.text()
+                    ANALYZE_FIELD -> analyze = xcp.text()
                     MONITOR_NAME_FIELD -> monitorName = xcp.text()
                     MONITOR_VERSION_FIELD -> monitorVersion = xcp.longValue()
                     MONITOR_TYPE_FIELD -> monitorType = xcp.text()
@@ -197,6 +232,17 @@ data class Alert(
                     END_TIME_FIELD -> endTime = xcp.instant()
                     LAST_NOTIFICATION_TIME_FIELD -> lastNotificationTime = xcp.instant()
                     ACKNOWLEDGED_TIME_FIELD -> acknowledgedTime = xcp.instant()
+
+                    ACKNOWLEDGE_DURATION -> acknowledgeDuration =
+                            if (xcp.currentToken() == XContentParser.Token.VALUE_NULL) null else Duration.ofMillis(xcp.longValue())
+                    TOTAL_DURATION -> totalDuration =
+                            if (xcp.currentToken() == XContentParser.Token.VALUE_NULL) null else Duration.ofMillis(xcp.longValue())
+                    RELATED_RESOURCES_FIELD -> {
+                        ensureExpectedToken(XContentParser.Token.START_ARRAY, xcp.currentToken(), xcp)
+                        while (xcp.nextToken() != XContentParser.Token.END_ARRAY) {
+                            relatedResources.add(RelatedResource.parse(xcp))
+                        }
+                    }
                     ERROR_MESSAGE_FIELD -> errorMessage = xcp.textOrNull()
                     ALERT_HISTORY_FIELD -> {
                         ensureExpectedToken(XContentParser.Token.START_ARRAY, xcp.currentToken(), xcp)
@@ -214,13 +260,16 @@ data class Alert(
                 }
             }
 
-            return Alert(id = id, version = version, schemaVersion = schemaVersion, monitorId = requireNotNull(monitorId),
+            return Alert(id = id, version = version, schemaVersion = schemaVersion,
+                    description = description, analyze = analyze, monitorId = requireNotNull(monitorId),
                     monitorName = requireNotNull(monitorName), monitorVersion = monitorVersion,
                     monitorType = monitorType, monitorUser = monitorUser,
                     triggerId = requireNotNull(triggerId), triggerName = requireNotNull(triggerName),
                     state = requireNotNull(state), startTime = requireNotNull(startTime), endTime = endTime,
                     lastNotificationTime = lastNotificationTime, acknowledgedTime = acknowledgedTime,
+                    acknowledgeDuration = acknowledgeDuration, totalDuration = totalDuration,
                     errorMessage = errorMessage, errorHistory = errorHistory, severity = severity,
+                    relatedResources = relatedResources,
                     actionExecutionResults = actionExecutionResults)
         }
 
@@ -237,6 +286,8 @@ data class Alert(
                 .field(ALERT_VERSION_FIELD, version)
                 .field(MONITOR_ID_FIELD, monitorId)
                 .field(SCHEMA_VERSION_FIELD, schemaVersion)
+                .field(DESCRIPTION_FIELD, description)
+                .field(ANALYZE_FIELD, analyze)
                 .field(MONITOR_VERSION_FIELD, monitorVersion)
                 .field(MONITOR_TYPE_FIELD, monitorType)
                 .field(MONITOR_NAME_FIELD, monitorName)
@@ -252,6 +303,8 @@ data class Alert(
                 .optionalTimeField(LAST_NOTIFICATION_TIME_FIELD, lastNotificationTime)
                 .optionalTimeField(END_TIME_FIELD, endTime)
                 .optionalTimeField(ACKNOWLEDGED_TIME_FIELD, acknowledgedTime)
+                .optionalDurationField(ACKNOWLEDGE_DURATION, acknowledgeDuration)
+                .optionalDurationField(TOTAL_DURATION, totalDuration)
                 .endObject()
     }
 

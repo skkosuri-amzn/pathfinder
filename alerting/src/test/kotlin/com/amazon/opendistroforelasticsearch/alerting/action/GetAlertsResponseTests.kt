@@ -25,6 +25,7 @@ import org.elasticsearch.common.io.stream.StreamInput
 import org.elasticsearch.common.xcontent.ToXContent
 import org.elasticsearch.test.ESTestCase
 import org.junit.Assert
+import java.time.Duration
 import java.time.Instant
 import java.util.Collections
 
@@ -47,6 +48,8 @@ class GetAlertsResponseTests : ESTestCase() {
                 "id",
                 0L,
                 0,
+                "test-desc",
+                null,
                 "monitorId",
                 "monitor",
                 "monitorName",
@@ -59,6 +62,9 @@ class GetAlertsResponseTests : ESTestCase() {
                 null,
                 null,
                 null,
+                Duration.ZERO,
+                Duration.ZERO,
+                Collections.emptyList(),
                 null,
                 Collections.emptyList(),
                 "severity",
@@ -83,6 +89,8 @@ class GetAlertsResponseTests : ESTestCase() {
                 "id",
                 0L,
                 0,
+                "test-desc",
+                null,
                 "monitorId",
                 "monitor",
                 "monitorName",
@@ -95,6 +103,9 @@ class GetAlertsResponseTests : ESTestCase() {
                 null,
                 null,
                 null,
+                Duration.ZERO,
+                Duration.ZERO,
+                Collections.emptyList(),
                 null,
                 Collections.emptyList(),
                 "severity",
@@ -103,12 +114,14 @@ class GetAlertsResponseTests : ESTestCase() {
         val req = GetAlertsResponse(listOf(alert), 1)
         var actualXContentString = req.toXContent(builder(), ToXContent.EMPTY_PARAMS).string()
         val expectedXContentString = "{\"alerts\":[{\"id\":\"id\",\"version\":0,\"monitor_id\":\"monitorId\"," +
-                "\"schema_version\":0,\"monitor_version\":0,\"monitor_type\":\"monitor\",\"monitor_name\":\"monitorName\"," +
+                "\"schema_version\":0,\"description\":\"test-desc\",\"analyze\":null,\"monitor_version\":0,\"monitor_type\":\"monitor\"," +
+                "\"monitor_name\":\"monitorName\"," +
                 "\"monitor_user\":{\"name\":\"admin\",\"backend_roles\":[],\"roles\":[]," +
                 "\"custom_attribute_names\":[],\"user_requested_tenant\":null},\"trigger_id\":\"triggerId\"," +
                 "\"trigger_name\":\"triggerName\",\"state\":\"ACKNOWLEDGED\",\"error_message\":null,\"alert_history\":[]," +
                 "\"severity\":\"severity\",\"action_execution_results\":[],\"start_time\":" + now.toEpochMilli() +
-                ",\"last_notification_time\":null,\"end_time\":null,\"acknowledged_time\":null}],\"totalAlerts\":1}"
+                ",\"last_notification_time\":null,\"end_time\":null,\"acknowledged_time\":null,\"acknowledge_duration\":0," +
+                "\"total_duration\":0}],\"totalAlerts\":1}"
         assertEquals(expectedXContentString, actualXContentString)
     }
 }

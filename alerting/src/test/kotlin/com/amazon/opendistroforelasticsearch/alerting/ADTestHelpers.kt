@@ -503,7 +503,8 @@ fun randomADMonitor(
     lastUpdateTime: Instant = Instant.now().truncatedTo(ChronoUnit.MILLIS),
     withMetadata: Boolean = false
 ): Monitor {
-    return Monitor(name = name, type = type, enabled = enabled, inputs = inputs, schedule = schedule, triggers = triggers,
+    return Monitor(name = name, description = "test-desc", type = type, enabled = enabled,
+            inputs = inputs, schedule = schedule, triggers = triggers,
             enabledTime = enabledTime, lastUpdateTime = lastUpdateTime,
             user = user, uiMetadata = if (withMetadata) mapOf("foo" to "bar") else mapOf())
 }

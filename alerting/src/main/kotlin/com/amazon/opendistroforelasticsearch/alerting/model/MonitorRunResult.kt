@@ -28,6 +28,10 @@ import org.elasticsearch.script.ScriptException
 import java.io.IOException
 import java.time.Instant
 
+/**
+ * Sriram: this is used in the notification message.
+ *
+ */
 data class MonitorRunResult(
     val monitorName: String,
     val periodStart: Instant,

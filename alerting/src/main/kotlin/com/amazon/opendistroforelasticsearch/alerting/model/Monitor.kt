@@ -21,6 +21,7 @@ import com.amazon.opendistroforelasticsearch.alerting.core.model.Schedule
 import com.amazon.opendistroforelasticsearch.alerting.core.model.ScheduledJob
 import com.amazon.opendistroforelasticsearch.alerting.core.model.SearchInput
 import com.amazon.opendistroforelasticsearch.alerting.elasticapi.instant
+import com.amazon.opendistroforelasticsearch.alerting.elasticapi.optionalStringField
 import com.amazon.opendistroforelasticsearch.alerting.elasticapi.optionalTimeField
 import com.amazon.opendistroforelasticsearch.alerting.elasticapi.optionalUserField
 import com.amazon.opendistroforelasticsearch.alerting.settings.AlertingSettings.Companion.MONITOR_MAX_INPUTS
@@ -51,6 +52,7 @@ data class Monitor(
     override val version: Long = NO_VERSION,
     override val type: String,
     override val name: String,
+    val description: String?,
     override val enabled: Boolean,
     override val schedule: Schedule,
     override val lastUpdateTime: Instant,
@@ -83,6 +85,7 @@ data class Monitor(
         version = sin.readLong(),
         type = sin.readString(),
         name = sin.readString(),
+        description = sin.readOptionalString(),
         enabled = sin.readBoolean(),
         schedule = Schedule.readFrom(sin),
         lastUpdateTime = sin.readInstant(),
@@ -110,6 +113,7 @@ data class Monitor(
         builder.field(TYPE_FIELD, type)
                 .field(SCHEMA_VERSION_FIELD, schemaVersion)
                 .field(NAME_FIELD, name)
+                .optionalStringField(DESCRIPTION_FIELD, description)
                 .optionalUserField(USER_FIELD, user)
                 .field(ENABLED_FIELD, enabled)
                 .optionalTimeField(ENABLED_TIME_FIELD, enabledTime)
@@ -130,6 +134,7 @@ data class Monitor(
         out.writeLong(version)
         out.writeString(type)
         out.writeString(name)
+        out.writeOptionalString(description)
         out.writeBoolean(enabled)
         if (schedule is CronSchedule) {
             out.writeEnum(Schedule.TYPE.CRON)
@@ -151,6 +156,7 @@ data class Monitor(
         const val TYPE_FIELD = "type"
         const val SCHEMA_VERSION_FIELD = "schema_version"
         const val NAME_FIELD = "name"
+        const val DESCRIPTION_FIELD = "description"
         const val USER_FIELD = "user"
         const val ENABLED_FIELD = "enabled"
         const val SCHEDULE_FIELD = "schedule"
@@ -173,6 +179,7 @@ data class Monitor(
         @Throws(IOException::class)
         fun parse(xcp: XContentParser, id: String = NO_ID, version: Long = NO_VERSION): Monitor {
             lateinit var name: String
+            var description: String? = ""
             var user: User? = null
             lateinit var schedule: Schedule
             var lastUpdateTime: Instant? = null
@@ -193,6 +200,7 @@ data class Monitor(
                     SCHEMA_VERSION_FIELD -> schemaVersion = xcp.intValue()
                     TYPE_FIELD -> type = xcp.text()
                     NAME_FIELD -> name = xcp.text()
+                    DESCRIPTION_FIELD -> description = xcp.text()
                     USER_FIELD -> user = if (xcp.currentToken() == Token.VALUE_NULL) null else User.parse(xcp)
                     ENABLED_FIELD -> enabled = xcp.booleanValue()
                     SCHEDULE_FIELD -> schedule = Schedule.parse(xcp)
@@ -226,6 +234,7 @@ data class Monitor(
                     version,
                     type,
                     requireNotNull(name) { "Monitor name is null" },
+                    description,
                     enabled,
                     requireNotNull(schedule) { "Monitor schedule is null" },
                     lastUpdateTime ?: Instant.now(),

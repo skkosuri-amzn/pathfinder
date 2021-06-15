@@ -23,6 +23,7 @@ import org.elasticsearch.common.io.stream.BytesStreamOutput
 import org.elasticsearch.common.io.stream.StreamInput
 import org.elasticsearch.test.ESTestCase
 import org.junit.Assert
+import java.time.Duration
 import java.time.Instant
 
 class AcknowledgeAlertResponseTests : ESTestCase() {
@@ -30,16 +31,20 @@ class AcknowledgeAlertResponseTests : ESTestCase() {
     fun `test acknowledge alert response`() {
 
         val acknowledged = mutableListOf(
-            Alert("1234", 0L, 1, "monitor-1234", "monitor", "test-monitor", 0L, randomUser(),
+            Alert("1234", 0L, 1, "test-desc", null, "monitor-1234", "monitor",
+                    "test-monitor", 0L, randomUser(),
                     "trigger-14", "test-trigger", Alert.State.ACKNOWLEDGED,
-                    Instant.now(), Instant.now(), Instant.now(), Instant.now(), null, ArrayList(),
+                    Instant.now(), Instant.now(), Instant.now(), Instant.now(), Duration.ZERO, Duration.ZERO, ArrayList(),
+                    null, ArrayList(),
                     "sev-2", ArrayList()
             )
         )
         val failed = mutableListOf(
-            Alert("1234", 0L, 1, "monitor-1234", "monitor", "test-monitor", 0L, randomUser(),
+            Alert("1234", 0L, 1, "test-desc", null, "monitor-1234", "monitor",
+                    "test-monitor", 0L, randomUser(),
                 "trigger-14", "test-trigger", Alert.State.ERROR, Instant.now(), Instant.now(),
-                Instant.now(), Instant.now(), null, mutableListOf(AlertError(Instant.now(), "Error msg")),
+                Instant.now(), Instant.now(), Duration.ZERO, Duration.ZERO, ArrayList(), null,
+                    mutableListOf(AlertError(Instant.now(), "Error msg")),
         "sev-2", mutableListOf(ActionExecutionResult("7890", null, 0)))
         )
         val missing = mutableListOf("1", "2", "3", "4")

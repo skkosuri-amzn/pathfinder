@@ -97,6 +97,7 @@ import org.elasticsearch.script.ScriptType
 import org.elasticsearch.script.TemplateScript
 import org.elasticsearch.search.builder.SearchSourceBuilder
 import org.elasticsearch.threadpool.ThreadPool
+import java.time.Duration
 import java.time.Instant
 import kotlin.coroutines.CoroutineContext
 
@@ -295,8 +296,14 @@ class MonitorRunner(
 
         // Merge the alert's error message to the current alert's history
         val updatedHistory = currentAlert?.errorHistory.update(alertError)
+        val totalDuration: Duration? = if (currentAlert?.startTime == null) {
+            null
+        } else {
+            Duration.ofMillis(currentTime.toEpochMilli())
+                    .minus(currentAlert?.startTime?.toEpochMilli()?.let { Duration.ofMillis(it) })
+        }
         return if (alertError == null && !result.triggered) {
-            currentAlert?.copy(state = COMPLETED, endTime = currentTime, errorMessage = null,
+            currentAlert?.copy(state = COMPLETED, endTime = currentTime, totalDuration = totalDuration, errorMessage = null,
                     errorHistory = updatedHistory, actionExecutionResults = updatedActionExecutionResults,
                     schemaVersion = IndexUtils.alertIndexSchemaVersion)
         } else if (alertError == null && currentAlert?.isAcknowledged() == true) {
@@ -308,7 +315,14 @@ class MonitorRunner(
                     schemaVersion = IndexUtils.alertIndexSchemaVersion)
         } else {
             val alertState = if (alertError == null) ACTIVE else ERROR
-            Alert(monitor = ctx.monitor, trigger = ctx.trigger, startTime = currentTime,
+
+            val monitor = ctx.monitor
+            // sriram: improve desc
+            // todo: add more details.
+            // convert
+            val analyze = "dashboards#/view/31af85d0-b68e-11eb-8356-9529d0f08410"
+
+            Alert(monitor.description, analyze, monitor, trigger = ctx.trigger, startTime = currentTime,
                     lastNotificationTime = currentTime, state = alertState, errorMessage = alertError?.message,
                     errorHistory = updatedHistory, actionExecutionResults = updatedActionExecutionResults,
                     schemaVersion = IndexUtils.alertIndexSchemaVersion)

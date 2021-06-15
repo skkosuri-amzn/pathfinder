@@ -43,6 +43,7 @@ import org.elasticsearch.rest.RestStatus.BAD_GATEWAY
 import org.elasticsearch.rest.RestStatus.GATEWAY_TIMEOUT
 import org.elasticsearch.rest.RestStatus.SERVICE_UNAVAILABLE
 import org.elasticsearch.search.builder.SearchSourceBuilder
+import java.time.Duration
 import java.time.Instant
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resume
@@ -143,6 +144,20 @@ fun XContentBuilder.optionalUserField(name: String, user: User?): XContentBuilde
         return nullField(name)
     }
     return this.field(name, user)
+}
+
+fun XContentBuilder.optionalStringField(name: String, desc: String?): XContentBuilder {
+    if (desc == null) {
+        return nullField(name)
+    }
+    return this.field(name, desc)
+}
+
+fun XContentBuilder.optionalDurationField(name: String, duration: Duration?): XContentBuilder {
+    if (duration == null) {
+        return nullField(name)
+    }
+    return this.field(name, duration.toMillis())
 }
 
 fun addFilter(user: User, searchSourceBuilder: SearchSourceBuilder, fieldName: String) {
